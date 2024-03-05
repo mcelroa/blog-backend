@@ -5,11 +5,8 @@ const cors = require("cors");
 
 const app = express();
 
+// Routes
 const authRoutes = require("./routes/auth");
-
-// Middleware
-app.use(bodyParser.json());
-app.use(cors());
 
 // MongoDB Configuration
 const mongoURI = "mongodb+srv://adammcelroy:TopHatMan15@blog.urblksr.mongodb.net/";
@@ -18,7 +15,11 @@ mongoose
   .then(() => console.log("MongoDB connected"))
   .catch((err) => console.log(err));
 
-// Routes
+// Middleware
+app.use(bodyParser.json());
+app.use(cors());
+
+// Routes Middleware
 app.use("/api", authRoutes);
 
 // Start server

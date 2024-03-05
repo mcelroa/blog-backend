@@ -29,8 +29,7 @@ router.post("/signup", async (req, res) => {
 
     res.status(201).json({ msg: "User registered successfully" });
   } catch (err) {
-    console.error(err.message);
-    res.status(500).send("Server Error");
+    res.status(500).json({ msg: err.message });
   }
 });
 
@@ -42,19 +41,18 @@ router.post("/signin", async (req, res) => {
     // Check if the user exists
     let user = await User.findOne({ email });
     if (!user) {
-      return res.status(400).json({ msg: "Invalid credentials" });
+      return res.status(400).json({ msg: "User with this email does not exist" });
     }
 
     // Check if the password is correct
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(400).json({ msg: "Invalid credentials" });
+      return res.status(400).json({ msg: "Incorrect Password, please try again" });
     }
 
     res.json({ msg: "User signed in successfully" });
   } catch (err) {
-    console.error(err.message);
-    res.status(500).send("Server Error");
+    res.status(500).json({ msg: err.message });
   }
 });
 
