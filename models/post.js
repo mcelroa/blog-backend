@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const PostScehma = new mongoose.Schema({
+const PostSchema = new mongoose.Schema({
   title: {
     type: String,
     required: true,
@@ -25,4 +25,4 @@ const PostScehma = new mongoose.Schema({
   ],
 });
 
-module.exports = mongoose.model("Post", PostScehma);
+module.exports = mongoose.model("Post", PostSchema);

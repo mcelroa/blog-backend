@@ -6,7 +6,8 @@ const cors = require("cors");
 const app = express();
 
 // Routes
-const authRoutes = require("./routes/auth");
+const authRoutes = require("./routes/user");
+const postRoutes = require("./routes/post");
 
 // MongoDB Configuration
 const mongoURI = "mongodb+srv://adammcelroy:TopHatMan15@blog.urblksr.mongodb.net/";
@@ -21,6 +22,7 @@ app.use(cors());
 
 // Routes Middleware
 app.use("/api", authRoutes);
+app.use("/api", postRoutes);
 
 // Start server
 const PORT = process.env.PORT || 5000;
