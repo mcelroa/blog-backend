@@ -2,9 +2,11 @@ const express = require("express");
 const router = express.Router();
 const Post = require("../models/post");
 const Comment = require("../models/comment");
+const { isAuth } = require("../middleware/auth");
+const mongoose = require("mongoose");
 
 // Create Post - POST: /posts
-router.post("/posts", async (req, res) => {
+router.post("/posts", isAuth, async (req, res) => {
   const { title, content, author } = req.body;
 
   try {
@@ -24,12 +26,12 @@ router.post("/posts", async (req, res) => {
 });
 
 // Get Posts - GET: /posts
-router.get("/posts", async (req, res) => {
+router.get("/posts", isAuth, async (req, res) => {
   try {
     const posts = await Post.find();
 
     // Check for existing posts
-    if (posts.length == 0) {
+    if (posts === null || (Array.isArray(posts) && posts.length === 0)) {
       return res.status(400).json({ msg: "There are no posts" });
     }
 
@@ -40,7 +42,7 @@ router.get("/posts", async (req, res) => {
 });
 
 // Get Post By Id - GET: /posts/:postId
-router.get("/posts/:postId", async (req, res) => {
+router.get("/posts/:postId", isAuth, async (req, res) => {
   // Get postId from params
   const postId = req.params.postId;
 
@@ -48,7 +50,7 @@ router.get("/posts/:postId", async (req, res) => {
     const post = await Post.findById(postId);
 
     // check if post is returned
-    if (post.length == 0) {
+    if (post === null || (Array.isArray(post) && post.length === 0)) {
       return res.status(400).json({ msg: "Post not found" });
     }
 
@@ -59,7 +61,7 @@ router.get("/posts/:postId", async (req, res) => {
 });
 
 // Update Post By Id - PUT: /posts/:postId
-router.put("/posts/:postId", async (req, res) => {
+router.put("/posts/:postId", isAuth, async (req, res) => {
   // get postId and form input from request
   const postId = req.params.postId;
   const { title, content } = req.body;
@@ -68,7 +70,7 @@ router.put("/posts/:postId", async (req, res) => {
     const updatedPost = await Post.findByIdAndUpdate(postId, { title, content }, { new: true });
 
     // check if post is returned
-    if (updatedPost.length == 0) {
+    if (updatedPost === null || (Array.isArray(updatedPost) && updatedPost.length === 0)) {
       return res.status(400).json({ msg: "Post not found" });
     }
 
@@ -79,14 +81,14 @@ router.put("/posts/:postId", async (req, res) => {
 });
 
 // Delete Post By Id - DELETE /posts/:postId
-router.delete("/posts/:postId", async (req, res) => {
+router.delete("/posts/:postId", isAuth, async (req, res) => {
   const postId = req.params.postId;
 
   try {
     const post = await Post.findById(postId);
 
     // check if post is returned
-    if (post.length == 0) {
+    if (post === null || (Array.isArray(post) && post.length === 0)) {
       return res.status(400).json({ msg: "Post not found" });
     }
 
@@ -100,14 +102,14 @@ router.delete("/posts/:postId", async (req, res) => {
 });
 
 // Get Comments for specific post - GET: posts/:postId/comments
-router.get("/posts/:postId/comments", async (req, res) => {
+router.get("/posts/:postId/comments", isAuth, async (req, res) => {
   const postId = req.params.postId;
 
   try {
     const post = await Post.findById(postId);
 
     // Check if post exists
-    if (post.length == 0) {
+    if (post === null || (Array.isArray(post) && post.length === 0)) {
       return res.status(400).json({ msg: "Post not found" });
     }
 
@@ -120,7 +122,7 @@ router.get("/posts/:postId/comments", async (req, res) => {
 });
 
 // Create comment for specific post - POST: /posts/:postId/comments
-router.post("/posts/:postId/comments", async (req, res) => {
+router.post("/posts/:postId/comments", isAuth, async (req, res) => {
   const postId = req.params.postId;
   const { content, userId } = req.body;
 
@@ -128,7 +130,7 @@ router.post("/posts/:postId/comments", async (req, res) => {
     // check if post exists
     const post = await Post.findById(postId);
 
-    if (post.length == 0) {
+    if (post === null || (Array.isArray(post) && post.length === 0)) {
       return res.status(400).json({ msg: "Post not found" });
     }
 
@@ -151,7 +153,7 @@ router.post("/posts/:postId/comments", async (req, res) => {
 });
 
 // Update comments on a specific post - PUT: /posts/:postId/comments/:commentId
-router.put("/posts/:postId/comments/:commentId", async (req, res) => {
+router.put("/posts/:postId/comments/:commentId", isAuth, async (req, res) => {
   const { postId, commentId } = req.params;
   const { content } = req.body;
 
@@ -175,23 +177,33 @@ router.put("/posts/:postId/comments/:commentId", async (req, res) => {
 });
 
 // Delete comment on a specific post - DELETE: /posts/:postId/comments/:commentId
-router.delete("/posts/:postId/comments/:commentId", async (req, res) => {
+router.delete("/posts/:postId/comments/:commentId", isAuth, async (req, res) => {
   const { postId, commentId } = req.params;
 
+  const session = await mongoose.startSession();
+
   try {
-    // Delete the comment from the database
-    const deletedComment = await Comment.findOneAndDelete({ _id: commentId, post: postId });
+    await session.withTransaction(async () => {
+      // Delete the comment from the Comment collection
+      const deletedComment = await Comment.findOneAndDelete({
+        _id: commentId,
+        post: postId,
+      }).session(session);
 
-    if (!deletedComment) {
-      return res.status(404).json({ msg: "Comment not found" });
-    }
+      if (!deletedComment) {
+        throw new Error("Comment not found");
+      }
 
-    // Remove the comment ID from the associated post's comments array
-    await Post.findByIdAndUpdate(postId, { $pull: { comments: commentId } });
+      // Remove the comment ID from the associated post's comments array
+      await Post.findByIdAndUpdate(postId, { $pull: { comments: commentId } }).session(session);
+    });
 
     res.status(200).json({ msg: "Comment Deleted" });
   } catch (error) {
-    res.status(500).json(error.message);
+    await session.abortTransaction();
+    res.status(500).json({ msg: error.message });
+  } finally {
+    session.endSession();
   }
 });
 
