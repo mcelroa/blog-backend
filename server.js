@@ -15,9 +15,10 @@ app.use(cors());
 // Routes
 const authRoutes = require("./routes/user");
 const postRoutes = require("./routes/post");
+const commentRoutes = require("./routes/comment");
 
 // MongoDB Configuration
-const mongoURI = "mongodb+srv://adammcelroy:TopHatMan15@blog.urblksr.mongodb.net/";
+const mongoURI = process.env.MONGO_URI;
 mongoose
   .connect(mongoURI)
   .then(() => console.log("MongoDB connected"))
@@ -26,6 +27,7 @@ mongoose
 // Routes Middleware
 app.use("/api", authRoutes);
 app.use("/api", postRoutes);
+app.use("/api", commentRoutes);
 
 // Start server
 const PORT = process.env.PORT || 5000;
