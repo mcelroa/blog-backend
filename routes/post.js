@@ -5,19 +5,19 @@ const { createPost, getPost, getAllPosts, updatePost, deletePost } = require("..
 
 const { isAuth } = require("../middleware/auth");
 
-// Create Post - POST: /posts
+// Create Post
 router.post("/posts", isAuth, createPost);
 
-// Get Posts - GET: /posts
+// Get All Posts
 router.get("/posts", isAuth, getAllPosts);
 
-// Get Post By Id - GET: /posts/:postId
+// Get Post By Id
 router.get("/posts/:postId", getPost);
 
-// Update Post By Id - PUT: /posts/:postId
+// Update Post By Id
 router.put("/posts/:postId", isAuth, updatePost);
 
-// Delete Post By Id - DELETE /posts/:postId
+// Delete Post By Id
 router.delete("/posts/:postId", isAuth, deletePost);
 
 module.exports = router;
