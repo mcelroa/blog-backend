@@ -55,7 +55,15 @@ exports.signin = async (req, res) => {
     };
 
     const token = jwt.sign(payload, process.env.SECRET_KEY);
-    res.cookie("t", token, { expire: new Date() + 9999 });
+
+    const oneHour = 3600000; // milliseconds
+    const expirationDate = new Date(Date.now() + oneHour);
+
+    res.cookie("t", token, {
+      sameSite: "None",
+      expires: expirationDate,
+    });
+
     res.json({ token, user });
   } catch (err) {
     res.status(500).json({ msg: err.message });
