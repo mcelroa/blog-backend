@@ -23,7 +23,20 @@ exports.signup = async (req, res) => {
     user.password = await bcrypt.hash(password, salt);
 
     // Save the user to the database
-    await user.save();
+    const newUser = await user.save();
+
+    // jwt payload
+    const payload = {
+      user: {
+        id: newUser.id,
+      },
+    };
+
+    const token = jwt.sign(payload, process.env.SECRET_KEY, { expiresIn: "1h" });
+
+    res.cookie("t", token, {
+      httpOnly: true,
+    });
 
     res.status(201).json({ msg: "User registered successfully" });
   } catch (err) {
