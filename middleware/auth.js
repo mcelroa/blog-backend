@@ -2,7 +2,7 @@ require("dotenv").config();
 
 const jwt = require("jsonwebtoken");
 
-function isAuth(req, res, next) {
+exports.isAuth = (req, res, next) => {
   // Get token from cookies
   const token = req.cookies.t;
 
@@ -18,8 +18,4 @@ function isAuth(req, res, next) {
   } catch (error) {
     res.status(401).json({ msg: "Token not valid" });
   }
-}
-
-module.exports = {
-  isAuth,
 };

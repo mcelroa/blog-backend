@@ -54,14 +54,10 @@ exports.signin = async (req, res) => {
       },
     };
 
-    const token = jwt.sign(payload, process.env.SECRET_KEY);
-
-    const oneHour = 3600000; // milliseconds
-    const expirationDate = new Date(Date.now() + oneHour);
+    const token = jwt.sign(payload, process.env.SECRET_KEY, { expiresIn: "1h" });
 
     res.cookie("t", token, {
-      sameSite: "None",
-      expires: expirationDate,
+      httpOnly: true,
     });
 
     res.json({ token, user });
